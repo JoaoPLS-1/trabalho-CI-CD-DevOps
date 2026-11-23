@@ -260,3 +260,25 @@ do e-mail precisa ser confirmado na caixa do destinatário; o estado
 
 - [GitHub: configurar notificações do Actions](https://docs.github.com/en/subscriptions-and-notifications/how-tos/managing-github-actions-notifications)
 - [GitHub: destinatários de notificações de execuções](https://docs.github.com/en/actions/concepts/workflows-and-actions/notifications-for-workflow-runs)
+
+## Etapa 5: matriz de versoes do Node.js
+
+O job de qualidade usa `strategy.matrix` com Node.js 22 e 24. Essas versoes
+sao compativeis com as dependencias atuais; as versoes 18 e 20 citadas
+como exemplo no enunciado nao atendem aos requisitos atuais do projeto.
+
+As duas combinacoes podem executar simultaneamente em `ubuntu-latest`,
+com `max-parallel: 2` e `fail-fast: false`. Assim, uma falha nao cancela
+a outra versao, e cada resultado fica visivel na aba Actions.
+
+O check obrigatorio `Validar HTML` depende da matriz completa e so aprova
+quando cada versao termina com sucesso. Falhas e cancelamentos bloqueiam
+o merge. A protecao da main permanece ativa durante essa mudanca.
+
+### Entrega
+
+- Configuracoes: pasta `.github/workflows/`.
+- Evidencias: pasta `docs/evidencias/`, com prints da falha de HTML e do deploy.
+- [Site publico no GitHub Pages](https://joaopls-1.github.io/trabalho-CI-CD-DevOps/).
+- Acesso da colaboradora: convite para `09116428-collab`, com permissao de escrita.
+  O acesso passa a valer quando ela aceitar o convite.
