@@ -282,3 +282,9 @@ o merge. A protecao da main permanece ativa durante essa mudanca.
 - [Site publico no GitHub Pages](https://joaopls-1.github.io/trabalho-CI-CD-DevOps/).
 - Acesso da colaboradora: convite para `09116428-collab`, com permissao de escrita.
   O acesso passa a valer quando ela aceitar o convite.
+
+### Prints e comprovantes
+
+- [Print da falha proposital de HTML](docs/evidencias/01-ci-html-invalido.png).
+- [Print do deploy aprovado](docs/evidencias/02-deploy-sucesso.png).
+- [Detalhes das evidencias e links das execucoes](docs/evidencias/README.md).
