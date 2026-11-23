@@ -83,8 +83,7 @@ Verificado localmente: instalação com `npm ci`, HTML válido aprovado, HTML in
 rejeitado e step de existência aprovado/reprovado conforme a presença do arquivo.
 A execução real da pipeline pode ser acompanhada na aba **Actions** e no PR.
 
-Esta entrega cobre a Etapa 1. O `index.html` está na raiz para publicação futura;
-a ativação do GitHub Pages e a automação de deploy não fazem parte desta etapa.
+Esta entrega cobre as Etapas 1 e 2: validação de PRs e publicação automática.
 
 ## Referências
 
@@ -153,9 +152,52 @@ texto fora do HTML, referências relativas e absolutas, imagens e CSS,
 âncoras inexistentes, páginas isoladas, URLs inválidas, `srcset`
 e respostas HTTP 404 e 403.
 
-A publicação e o deploy ainda não foram configurados nesta etapa.
 O check obrigatório impede integrar código reprovado à branch principal.
+A publicação após o merge é descrita na Etapa 2.
 
 Referências adicionais:
 [Linkinator](https://github.com/JustinBeckwith/linkinator) e
 [GNU find: tamanho](https://www.gnu.org/software/findutils/manual/html_node/find_html/Size.html).
+
+## Etapa 2: publicação automática
+
+O workflow `.github/workflows/cd.yml` dispara em cada `push` para `main`,
+incluindo o commit gerado pelo merge de um PR aprovado.
+
+1. Revalida a página inicial, tamanho, texto, linter e links.
+2. Executa `npm run build` para preparar o diretório `_site/`.
+3. Envia o artefato com `actions/upload-pages-artifact@v3`.
+4. O job `publicar`, dependente da preparação, usa
+   `actions/configure-pages@v5` e `actions/deploy-pages@v4`.
+
+O workflow tem `contents: read`. Apenas o job de publicação recebe
+`pages: write` para publicar e `id-token: write` para autenticar a origem
+do deploy. O ambiente `github-pages` aceita a branch protegida e não exige
+aprovação manual. O Pages usa **GitHub Actions** como fonte de publicação.
+
+A concorrência do grupo `github-pages` evita publicações simultâneas.
+Qualquer erro na preparação impede que o job de publicação seja executado.
+
+### Conteúdo publicado
+
+O build copia arquivos versionados de HTML, CSS, JavaScript, imagens,
+fontes, mídia, PDF, texto, XML, JSON e webmanifest, preservando os caminhos.
+Pastas de ferramentas `scripts/`, `tests/`, `docs/`, dependências,
+arquivos ocultos e manifests do npm ficam fora do artefato.
+A página inicial permanece na raiz, e `.nojekyll` é gerado para servir o site
+estático diretamente.
+
+Para inspecionar o artefato local, execute `npm run build` em uma cópia sem
+`_site/` existente. O build exige uma pasta de saída nova para evitar arquivos
+antigos na publicação. A pasta gerada é ignorada pelo Git e pelo linter.
+
+### Verificar a entrega
+
+- Acompanhe o workflow **CD - GitHub Pages** na aba **Actions**.
+- Após o merge em `main`, a publicação ocorre automaticamente.
+- O ambiente **github-pages** informa a URL do site.
+- Os 20 testes incluem o isolamento dos arquivos públicos e a rejeição
+  de página inicial renomeada no build.
+
+Referência:
+[GitHub Pages com workflows personalizados](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
