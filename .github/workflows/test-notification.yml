@@ -1,0 +1,25 @@
+name: Teste de notificacao por e-mail
+run-name: Teste de e-mail - falha simulada por ${{ github.actor }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmar:
+        description: Confirmar falha intencional para testar o e-mail
+        required: true
+        type: boolean
+        default: false
+
+permissions: {}
+
+jobs:
+  simular-falha:
+    if: ${{ inputs.confirmar }}
+    name: Falha intencional para validar notificacao
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - name: Simular erro sem executar o deploy
+        run: |
+          echo "::error::Falha simulada para validar o e-mail nativo do GitHub Actions."
+          exit 1
