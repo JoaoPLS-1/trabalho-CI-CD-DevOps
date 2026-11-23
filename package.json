@@ -4,12 +4,15 @@
   "private": true,
   "description": "Validação de HTML em Pull Requests com GitHub Actions",
   "scripts": {
-    "lint": "html-validate \"**/*.html\""
+    "lint": "html-validate \"**/*.html\"",
+    "check:links": "node scripts/ci/check-links.mjs",
+    "test": "node --test tests/*.test.mjs"
   },
   "engines": {
     "node": "^22.16.0 || >=24.0.0"
   },
   "devDependencies": {
-    "html-validate": "10.17.0"
+    "html-validate": "10.17.0",
+    "linkinator": "8.1.0"
   }
 }

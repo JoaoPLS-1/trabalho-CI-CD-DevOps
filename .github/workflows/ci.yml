@@ -19,12 +19,13 @@ jobs:
           persist-credentials: false
 
       - name: Verificar index.html na raiz
-        shell: bash
-        run: |
-          if [ ! -f index.html ]; then
-            echo "::error::O arquivo index.html deve existir na raiz do projeto."
-            exit 1
-          fi
+        run: bash scripts/ci/check-files.sh index
+
+      - name: Bloquear arquivos acima de 500 KB
+        run: bash scripts/ci/check-files.sh size
+
+      - name: Varrer termos bloqueados
+        run: bash scripts/ci/check-files.sh text
 
       - name: Preparar Node.js
         uses: actions/setup-node@v6
@@ -37,3 +38,9 @@ jobs:
 
       - name: Executar linter HTML
         run: npm run lint
+
+      - name: Verificar links e imagens
+        run: npm run check:links
+
+      - name: Testar os bloqueios da CI
+        run: npm test
