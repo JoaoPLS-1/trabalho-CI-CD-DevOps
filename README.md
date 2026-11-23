@@ -1,5 +1,8 @@
 # Trabalho CI/CD — DevOps
 
+[![CI](https://github.com/JoaoPLS-1/trabalho-CI-CD-DevOps/actions/workflows/ci.yml/badge.svg?event=pull_request)](https://github.com/JoaoPLS-1/trabalho-CI-CD-DevOps/actions/workflows/ci.yml)
+[![CD - GitHub Pages](https://github.com/JoaoPLS-1/trabalho-CI-CD-DevOps/actions/workflows/cd.yml/badge.svg?branch=main&event=push)](https://github.com/JoaoPLS-1/trabalho-CI-CD-DevOps/actions/workflows/cd.yml)
+
 ## Etapa 1: integração contínua
 
 Validar Pull Requests para `main` e bloquear o merge quando a validação falhar.
