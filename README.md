@@ -28,7 +28,7 @@ O job `Validar HTML` usa um runner `ubuntu-latest` e executa, em ordem:
 2. Verificar `index.html` na raiz; encerrar com erro se faltar.
 3. Preparar Node.js 24 com `actions/setup-node`.
 4. Instalar dependências com `npm ci`, usando o lockfile versionado.
-5. Executar `npm run lint` em todos os arquivos HTML do projeto.
+5. Executar `npm run lint` em cada arquivo HTML do projeto.
 
 A verificação de existência ocorre imediatamente após o checkout, necessário
 para acessar os arquivos, antes de preparar Node.js ou instalar dependências.
@@ -90,3 +90,72 @@ a ativação do GitHub Pages e a automação de deploy não fazem parte desta et
 
 - [HTML-Validate: CLI](https://html-validate.org/usage/cli.html)
 - [GitHub: proteção de branches](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches)
+
+## Novos critérios obrigatórios da CI
+
+Depois do checkout, a primeira verificação exige um arquivo regular
+`index.html` na raiz. Renomeá-lo para `home.html` ou `index-teste.html`
+reprova imediatamente, antes de instalar dependências.
+
+Em seguida, a CI verifica tamanho e termos bloqueados. Depois da instalação,
+executa o linter, a validação de links e a suíte de testes. Todas essas etapas
+integram o check obrigatório `Validar HTML`; qualquer falha bloqueia o merge.
+
+### Tamanho
+
+O limite é decimal: 500 KB = 500.000 bytes. O comando GNU
+`find ... -size +500000c` rejeita cada arquivo acima desse limite, inclusive
+em subpastas e com espaços no nome. Exatamente 500.000 bytes são permitidos.
+Metadados `.git` e dependências `node_modules` ficam fora dessa verificação.
+
+### Texto
+
+A varredura com `git grep` verifica os arquivos de texto versionados,
+incluindo documentação e configuração, sem distinguir maiúsculas de minúsculas.
+Os quatro termos do enunciado são bloqueados inclusive em comentários e
+dentro de expressões maiores. Binários são ignorados.
+A saída lista apenas os arquivos reprovados, sem imprimir conteúdo sensível.
+A definição dos termos no script e nos testes usa partes concatenadas para
+evitar que a regra reprove a própria implementação.
+
+### Links e imagens
+
+O Linkinator verifica todas as páginas HTML versionadas, inclusive páginas
+sem links de navegação apontando para elas. Um servidor temporário local
+permite validar caminhos relativos, caminhos a partir da raiz, imagens,
+folhas de estilo, âncoras e referências de imagem em `srcset`.
+
+URLs HTTP/HTTPS externas são consultadas. URLs inválidas, caminhos inexistentes,
+erros HTTP e falhas de rede reprovam; respostas 403 também reprovam.
+O limite por requisição é 15 segundos. Links externos precisam estar acessíveis
+ao runner no momento da execução. E-mail e telefone seguem o tratamento
+padrão do Linkinator para URLs de ação.
+
+### Executar todas as verificações
+
+Use Node.js 24 e Bash com GNU find e Git. No Windows, use Git Bash.
+Adicione arquivos novos com `git add` antes de validar: a varredura de texto e
+a descoberta de páginas usam os arquivos versionados.
+
+```sh
+npm ci --ignore-scripts --no-audit --no-fund
+bash scripts/ci/check-files.sh all
+npm run lint
+npm run check:links
+npm test
+```
+
+### Testes automatizados
+
+Os 18 testes em `tests/ci.test.mjs` cobrem renomeação da página inicial,
+limite exato e excesso de tamanho, os quatro termos bloqueados,
+texto fora do HTML, referências relativas e absolutas, imagens e CSS,
+âncoras inexistentes, páginas isoladas, URLs inválidas, `srcset`
+e respostas HTTP 404 e 403.
+
+A publicação e o deploy ainda não foram configurados nesta etapa.
+O check obrigatório impede integrar código reprovado à branch principal.
+
+Referências adicionais:
+[Linkinator](https://github.com/JustinBeckwith/linkinator) e
+[GNU find: tamanho](https://www.gnu.org/software/findutils/manual/html_node/find_html/Size.html).
