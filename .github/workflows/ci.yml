@@ -9,9 +9,14 @@ permissions:
 
 jobs:
   qualidade:
-    name: Validar HTML
+    name: Validar HTML (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        node-version: [22, 24]
     steps:
       - name: Baixar código
         uses: actions/checkout@v6
@@ -30,7 +35,7 @@ jobs:
       - name: Preparar Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: ${{ matrix.node-version }}
           cache: npm
 
       - name: Instalar dependências
@@ -44,3 +49,20 @@ jobs:
 
       - name: Testar os bloqueios da CI
         run: npm test
+
+  aprovacao:
+    name: Validar HTML
+    needs: qualidade
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    permissions: {}
+    steps:
+      - name: Exigir sucesso nas duas versoes
+        env:
+          MATRIX_RESULT: ${{ needs.qualidade.result }}
+        run: |
+          if [[ "$MATRIX_RESULT" != "success" ]]; then
+            echo "::error::A matriz precisa ser aprovada em cada versao do Node.js."
+            exit 1
+          fi
