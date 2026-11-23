@@ -204,3 +204,59 @@ antigos na publicação. A pasta gerada é ignorada pelo Git e pelo linter.
 
 Referência:
 [GitHub Pages com workflows personalizados](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
+
+## Etapa 4: notificações por e-mail
+
+Foi escolhida a notificação nativa do GitHub Actions, sem serviço SMTP,
+credenciais adicionais ou action externa para enviar mensagens.
+
+### Ativação na conta
+
+A configuração é pessoal e precisa ser feita por cada integrante responsável:
+
+1. Abra [Configurações de notificações](https://github.com/settings/notifications).
+2. Em **System → Actions**, habilite **Email**.
+3. Selecione **Only notify for failed workflows** e salve.
+4. Confira o endereço verificado e as opções de recebimento em
+   [Configurações de e-mail](https://github.com/settings/emails).
+5. Acompanhe o repositório pela opção **Watch**.
+
+O envio é realizado pelo GitHub quando uma execução falha, incluindo o
+workflow **CD - GitHub Pages**. Isso cobre erros na preparação, build e
+publicação, mesmo quando o job de publicação fica sem executar porque
+a preparação falhou.
+
+A documentação do GitHub define essas notificações para execuções
+disparadas pelo próprio usuário. Cada integrante que integra PRs e dispara
+o deploy deve habilitar a preferência na própria conta. Essa opção não
+é uma lista de distribuição que envia cada falha a qualquer endereço da equipe.
+Para alertar um canal compartilhado independentemente de quem disparou
+a execução, seria necessário adicionar SMTP ou webhook em uma etapa futura.
+
+Para receber também os resultados de sucesso, desmarque o filtro de falhas.
+Essa preferência da conta não pode ser ativada por um arquivo YAML do projeto.
+
+### Teste sem afetar o site
+
+O workflow `.github/workflows/test-notification.yml` existe apenas para
+demonstrar o recebimento:
+
+1. Habilite o e-mail de falhas na conta.
+2. Abra **Actions → Teste de notificacao por e-mail → Run workflow**.
+3. Escolha `main`, marque a confirmação e execute.
+4. O job termina com erro intencional usando `exit 1`.
+5. Confira o e-mail, inclusive a pasta de spam, e guarde uma captura para a atividade.
+
+Ele usa apenas `workflow_dispatch`, sem checkout, secrets ou permissões de
+escrita, e não executa a publicação. Seu erro intencional não altera os
+badges dos workflows CI e CD nem a página publicada.
+Sem a confirmação, o job é ignorado.
+
+A aprovação da CI demonstra que o código continua válido. O recebimento
+do e-mail precisa ser confirmado na caixa do destinatário; o estado
+`failure` da execução de teste, sozinho, não comprova entrega de mensagem.
+
+### Pesquisa
+
+- [GitHub: configurar notificações do Actions](https://docs.github.com/en/subscriptions-and-notifications/how-tos/managing-github-actions-notifications)
+- [GitHub: destinatários de notificações de execuções](https://docs.github.com/en/actions/concepts/workflows-and-actions/notifications-for-workflow-runs)
