@@ -1,6 +1,7 @@
+import { buildSite } from '../scripts/build-site.mjs';
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, renameSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, writeFileSync, renameSync, rmSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -117,4 +118,39 @@ test('valida URL externa e reprova HTTP 404 e 403', async (t) => {
     const root = fixture(t, `<html><body><a href="${origin}${path}">Externo</a></body></html>`);
     assert.equal((await checkLinks(root)).passed, passed);
   }
+});
+
+test('artefato inclui pagina e assets, sem ferramentas e arquivos privados', (t) => {
+  const root = fixture(t);
+  for (const [file, content] of [
+    ['assets/foto.svg', '<svg xmlns="http://www.w3.org/2000/svg"></svg>'],
+    ['css/style.css', 'body { color: black; }'],
+    ['pages/outra.html', '<html><body>Outra pagina</body></html>'],
+    ['scripts/interno.js', 'console.log("interno");'],
+    ['tests/fixture.html', '<html></html>'],
+    ['docs/guia.txt', 'Documentacao'],
+    ['package.json', '{}'],
+    ['package-lock.json', '{}'],
+    ['.env', 'CHAVE=exemplo'],
+    ['README.md', '# Guia'],
+  ]) {
+    mkdirSync(dirname(join(root, file)), { recursive: true });
+    writeFileSync(join(root, file), content);
+  }
+  execFileSync('git', ['add', '.'], { cwd: root });
+  const result = buildSite(root);
+  assert.equal(existsSync(join(result.output, 'index.html')), true);
+  for (const file of ['assets/foto.svg', 'css/style.css', 'pages/outra.html', '.nojekyll']) {
+    assert.equal(existsSync(join(result.output, file)), true, file);
+  }
+  for (const file of ['scripts', 'tests', 'docs', 'package.json', 'package-lock.json', '.env', 'README.md', '.git']) {
+    assert.equal(existsSync(join(result.output, file)), false, file);
+  }
+});
+
+test('build reprova pagina inicial renomeada antes de gerar artefato', (t) => {
+  const root = fixture(t);
+  renameSync(join(root, 'index.html'), join(root, 'home.html'));
+  assert.throws(() => buildSite(root), /index.html/);
+  assert.equal(existsSync(join(root, '_site')), false);
 });

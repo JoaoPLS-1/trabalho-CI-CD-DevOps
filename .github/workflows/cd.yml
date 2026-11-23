@@ -1,0 +1,72 @@
+name: CD - GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  preparar:
+    name: Preparar site aprovado
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Baixar código da main
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Verificar index.html antes de publicar
+        run: bash scripts/ci/check-files.sh index
+
+      - name: Validar tamanho e texto
+        run: |
+          bash scripts/ci/check-files.sh size
+          bash scripts/ci/check-files.sh text
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Validar HTML e referências
+        run: |
+          npm run lint
+          npm run check:links
+
+      - name: Preparar arquivos públicos
+        run: npm run build
+
+      - name: Enviar artefato do site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site/
+
+  publicar:
+    name: Publicar no GitHub Pages
+    needs: preparar
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Configurar Pages
+        uses: actions/configure-pages@v5
+
+      - name: Publicar site
+        id: deployment
+        uses: actions/deploy-pages@v4
