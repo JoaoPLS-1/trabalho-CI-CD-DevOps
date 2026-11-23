@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  qualidade:
+    name: Validar HTML
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Verificar index.html na raiz
+        shell: bash
+        run: |
+          if [ ! -f index.html ]; then
+            echo "::error::O arquivo index.html deve existir na raiz do projeto."
+            exit 1
+          fi
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Executar linter HTML
+        run: npm run lint
